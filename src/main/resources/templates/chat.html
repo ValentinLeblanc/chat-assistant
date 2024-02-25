@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat View</title>
+    <link th:href="@{/chat.css}" rel="stylesheet" />
+    <script type="text/javascript" th:src="@{/chat.js}"></script>
+</head>
+<body>
+    <div class="chat-container"></div>
+    <form onsubmit="sendMessage(); return false;">
+        <input id="messageInput" type="text" name="message" placeholder="Type your message here" required>
+        <button type="submit">Send</button>
+    </form>
+    <script th:inline="javascript">
+		/*<![CDATA[*/
+		var chatId = /*[[${chatId}]]*/'default';
+		/*]]>*/
+	</script>
+</body>
+</html>
