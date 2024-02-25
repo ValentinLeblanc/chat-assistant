@@ -1,4 +1,4 @@
-package fr.leblanc.chatassitant.plugin;
+package fr.leblanc.chatassistant.plugin;
 
 import java.net.URISyntaxException;
 import java.net.URL;

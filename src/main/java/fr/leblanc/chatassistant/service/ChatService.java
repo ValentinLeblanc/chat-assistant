@@ -1,4 +1,4 @@
-package fr.leblanc.chatassitant.service;
+package fr.leblanc.chatassistant.service;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.service.TokenStream;
-import fr.leblanc.chatassitant.plugin.ChatPlugin;
+import fr.leblanc.chatassistant.plugin.ChatPlugin;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 

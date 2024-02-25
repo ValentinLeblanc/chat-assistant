@@ -1,4 +1,4 @@
-package fr.leblanc.chatassitant.controller;
+package fr.leblanc.chatassistant.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

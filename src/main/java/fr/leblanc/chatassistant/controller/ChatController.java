@@ -1,4 +1,4 @@
-package fr.leblanc.chatassitant.controller;
+package fr.leblanc.chatassistant.controller;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import fr.leblanc.chatassitant.service.ChatService;
+import fr.leblanc.chatassistant.service.ChatService;
 import reactor.core.publisher.Flux;
 
 @RestController

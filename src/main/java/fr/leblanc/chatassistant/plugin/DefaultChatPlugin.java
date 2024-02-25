@@ -1,4 +1,4 @@
-package fr.leblanc.chatassitant.plugin;
+package fr.leblanc.chatassistant.plugin;
 
 import org.springframework.stereotype.Service;
 

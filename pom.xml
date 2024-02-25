@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>fr.leblanc</groupId>
-	<artifactId>chat-assitant</artifactId>
+	<artifactId>chat-assistant</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>chat-assitant</name>
+	<name>chat-assistant</name>
 	<description>Chat assistant</description>
 	<properties>
 		<java.version>17</java.version>

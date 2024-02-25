@@ -1,10 +1,10 @@
-package fr.leblanc.chatassitant;
+package fr.leblanc.chatassistant;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ChatAssitantApplicationTests {
+class ChatAssistantApplicationTests {
 
 	@Test
 	void contextLoads() {
