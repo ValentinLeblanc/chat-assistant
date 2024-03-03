@@ -1,6 +1,9 @@
 package fr.leblanc.chatassistant.plugin;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +13,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import dev.langchain4j.agent.tool.Tool;
@@ -18,15 +22,27 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.TokenStream;
+import fr.leblanc.solver.cemantix.CemantixSolver;
 
 @Service
 public class WebChatPlugin implements ChatPlugin {
 
+	@SystemMessage({
+		"You can search on google to get web pages URL with relevant information",
+		"You can extract a web page content from its URL",
+		"You can search the cemantix word",
+	})
 	private interface ChatAgent {
 		String chat(String userMessage);
 	}
 	
+	@SystemMessage({
+		"You can search on google to get web pages URL with relevant information",
+		"You can extract a web page content from its URL",
+		"You can search the cemantix word",
+	})
 	private interface StreamingChatAgent {
 		TokenStream streamChat(String userMessage);
 	}
@@ -76,15 +92,27 @@ public class WebChatPlugin implements ChatPlugin {
 	
 	private static class WebTool {
 		
+		@Tool("Gets the cemantix word")
+		String getCemantixWord(String word) {
+			LocalDate currentDate = LocalDate.now(ZoneId.of("Europe/Paris"));
+	        String date = currentDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+			CemantixSolver solver = new CemantixSolver(date);
+			return solver.solve();
+		}
+		
 		@Tool("Extracts text from a web page, given its URL")
 		String extractTextFromWebPage(String url) {
-			String html = fetchHTML(url);
-			Document doc = Jsoup.parse(html);
-	        String text = doc.text();
-	        if (text == null || text.isBlank()) {
-	        	text = "#EMPTY";
-	        }
-			return text;
+			try {
+				String html = fetchHTML(url);
+				Document doc = Jsoup.parse(html);
+				String text = doc.text();
+				if (text == null || text.isBlank()) {
+					text = "#EMPTY";
+				}
+				return text;
+			} catch (HttpClientErrorException e) {
+				return "#ERROR";
+			}
 		}
 		
 		@Tool("Search URL results from google, given a query")
