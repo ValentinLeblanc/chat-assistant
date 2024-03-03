@@ -13,9 +13,9 @@ function sendMessage() {
     botMessageDiv.className = 'bot-message';
     chatContainer.appendChild(botMessageDiv);
     
-    var eventSource = new EventSource('/chat/send-message?message=' + message + "&chatId=" + chatId);
+    var eventSource = new EventSource('/chat/stream?message=' + message + "&chatId=" + chatId);
     eventSource.onmessage = function(event) {
-        if (event.data == "$CLOSE") {
+        if (event.data == "$COMPLETE") {
             eventSource.close();
         } else {
             var token = event.data.replace("$SPACE", " ");

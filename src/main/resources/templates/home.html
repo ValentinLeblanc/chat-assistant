@@ -7,8 +7,8 @@
 </head>
 <body>
     <div class="button-container">
-        <a href="/chat?chatId=default" class="custom-button">Default</a>
-        <a href="/chat?chatId=dontstarvetogether" class="custom-button">Don't Starve Together</a>
-    </div>
+	    <a th:each="plugin : ${plugins}"
+	       th:href="@{'/chat?chatId=' + ${plugin.id}}" class="custom-button" th:text="${plugin.displayName}"></a>
+	</div>
 </body>
 </html>

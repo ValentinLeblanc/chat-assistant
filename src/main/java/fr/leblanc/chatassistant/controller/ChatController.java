@@ -19,8 +19,13 @@ public class ChatController {
 		this.chatService = chatService;
 	}
 	
-	@GetMapping(value = "/send-message" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public Flux<String> sendMessage(@RequestParam(required = false) String chatId, @RequestParam String message) {
+	@GetMapping(value = "/message" , produces = MediaType.TEXT_PLAIN_VALUE)
+	public String sendMessageBlock(@RequestParam(required = false) String chatId, @RequestParam String message) {
 	    return chatService.sendMessage(chatId, message);
+	}
+	
+	@GetMapping(value = "/stream" , produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Flux<String> sendMessage(@RequestParam(required = false) String chatId, @RequestParam String message) {
+		return chatService.sendStreamingMessage(chatId, message);
 	}
 }

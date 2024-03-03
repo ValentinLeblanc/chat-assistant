@@ -18,6 +18,7 @@ import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.embedding.AllMiniLmL6V2EmbeddingModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -34,22 +35,60 @@ public class DontStarveTogetherChatPlugin implements ChatPlugin {
 
 	private interface ChatAgent {
 		@SystemMessage({
-	    	"You act as an assistant for the Don't Starve Together game.",
-	    	"You need to provide information about the game, the mechanics and the ingredients needed for each crafting operation."
-	    })
-		TokenStream chat(String userMessage);
+			"You act as an assistant for the Don't Starve Together game.",
+			"You need to provide information about the game, the mechanics and the ingredients needed for each crafting operation."
+		})
+		String chat(String userMessage);
+	}
+	
+	private interface StreamingChatAgent {
+		@SystemMessage({
+			"You act as an assistant for the Don't Starve Together game.",
+			"You need to provide information about the game, the mechanics and the ingredients needed for each crafting operation."
+		})
+		TokenStream streamChat(String userMessage);
 	}
 
 	private ChatAgent chatAgent;
+	private StreamingChatAgent streamingChatAgent;
 	
 	@Override
 	public String getId() {
 		return "dontstarvetogether";
 	}
+	
+	@Override
+	public String getDisplayName() {
+		return "Don't Starve Together";
+	}
 
 	@Override
-	public void createChatAgent(StreamingChatLanguageModel chatModel) {
+	public void initChatAgent(ChatLanguageModel chatModel) {
 	
+		ContentRetriever contentRetriever = createContentRetriever();
+	    ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
+	
+	    chatAgent = AiServices.builder(ChatAgent.class)
+	            .chatLanguageModel(chatModel)
+	            .contentRetriever(contentRetriever)
+	            .chatMemory(chatMemory)
+	            .build();
+	}
+
+	@Override
+	public void initStreamingChatAgent(StreamingChatLanguageModel chatModel) {
+	
+		ContentRetriever contentRetriever = createContentRetriever();
+	    ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
+	
+	    streamingChatAgent = AiServices.builder(StreamingChatAgent.class)
+	            .streamingChatLanguageModel(chatModel)
+	            .contentRetriever(contentRetriever)
+	            .chatMemory(chatMemory)
+	            .build();
+	}
+
+	private ContentRetriever createContentRetriever() {
 		DocumentParser documentParser = new TextDocumentParser();
 		
 	    Path documentPath = toPath("dontstarvetogether.txt");
@@ -64,19 +103,11 @@ public class DontStarveTogetherChatPlugin implements ChatPlugin {
 	    EmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
 	    embeddingStore.addAll(embeddings, segments);
 	
-	    ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
+	    return EmbeddingStoreContentRetriever.builder()
 	            .embeddingStore(embeddingStore)
 	            .embeddingModel(embeddingModel)
 	            .maxResults(2) // on each interaction we will retrieve the 2 most relevant segments
 	            .minScore(0.5) // we want to retrieve segments at least somewhat similar to user query
-	            .build();
-	
-	    ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
-	
-	    chatAgent = AiServices.builder(ChatAgent.class)
-	            .streamingChatLanguageModel(chatModel)
-	            .contentRetriever(contentRetriever)
-	            .chatMemory(chatMemory)
 	            .build();
 	}
 	
@@ -90,8 +121,13 @@ public class DontStarveTogetherChatPlugin implements ChatPlugin {
     }
 
 	@Override
-	public TokenStream chat(String message) {
+	public String chat(String message) {
 		return chatAgent.chat(message);
+	}
+	
+	@Override
+	public TokenStream streamChat(String message) {
+		return streamingChatAgent.streamChat(message);
 	}
 
 }
