@@ -16,7 +16,7 @@ import dev.langchain4j.service.TokenStream;
 import fr.leblanc.solver.cemantix.CemantixSolver;
 
 @Service
-public class CemantixSolverChatPlugin  implements ChatPlugin {
+public class CemantixSolverChatPlugin implements ChatPlugin {
 
 	private interface ChatAgent {
 		String chat(String userMessage);

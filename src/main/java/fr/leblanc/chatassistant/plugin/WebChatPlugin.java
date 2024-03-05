@@ -8,10 +8,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.memory.ChatMemory;
@@ -25,18 +24,18 @@ import dev.langchain4j.service.TokenStream;
 @Service
 public class WebChatPlugin implements ChatPlugin {
 
+	private static final Logger logger = LoggerFactory.getLogger(WebChatPlugin.class);
+
 	@SystemMessage({
-		"You can search on google to get web pages URL with relevant information",
-		"You can extract a web page content from its URL",
+		"You search on the Web to retrieve relevant information",
 	})
 	private interface ChatAgent {
 		String chat(String userMessage);
 	}
 	
 	@SystemMessage({
-		"You can search on google to get web pages URL with relevant information",
-		"You can extract a web page content from its URL",
-	})
+		"You search on the Web to retrieve relevant information",
+		})
 	private interface StreamingChatAgent {
 		TokenStream streamChat(String userMessage);
 	}
@@ -60,7 +59,7 @@ public class WebChatPlugin implements ChatPlugin {
 	    streamingChatAgent = AiServices.builder(StreamingChatAgent.class)
 	            .streamingChatLanguageModel(chatModel)
 	            .chatMemory(chatMemory)
-	            .tools(new WebTool())
+	            .tools(new WebScrappingTool())
 	            .build();
 	}
 
@@ -70,7 +69,7 @@ public class WebChatPlugin implements ChatPlugin {
 	    chatAgent = AiServices.builder(ChatAgent.class)
 	            .chatLanguageModel(chatModel)
 	            .chatMemory(chatMemory)
-	            .tools(new WebTool())
+	            .tools(new WebScrappingTool())
 	            .build();
 	}
 
@@ -84,55 +83,52 @@ public class WebChatPlugin implements ChatPlugin {
 		return chatAgent.chat(message);
 	}
 	
-	private static class WebTool {
+	private static class WebScrappingTool {
 		
-		@Tool("Extracts text from a web page, given its URL")
-		String extractTextFromWebPage(String url) {
-			try {
-				String html = fetchHTML(url);
-				Document doc = Jsoup.parse(html);
-				String text = doc.text();
-				if (text == null || text.isBlank()) {
-					text = "#EMPTY";
-				}
-				return text;
-			} catch (HttpClientErrorException e) {
-				return "#ERROR";
-			}
+		@Tool("Gets information from the Web, given a query")
+		String searchOnWeb(String query) {
+			List<String> links = extractGoogleLinks(query);
+			return extractWebPages(links);
 		}
-		
-		@Tool("Search URL results from google, given a query")
-		List<String> searchFromGoogle(String query) {
+
+		private List<String> extractGoogleLinks(String query) {
+			logger.info("search from Google: {}", query);
 			List<String> links = new ArrayList<>();
-	        try {
-	            Document doc = Jsoup.connect("https://www.google.com/search?q=" + query).get();
-	            Elements results = doc.select("div.g");
-	            
-                Elements urlElements = results.select("div.yuRUbf a[href]");
-
-                int count = 0;
-                
-                for (Element element : urlElements) {
-                    String link = element.attr("href");
-                    links.add(link);
-                    count++;
-                    if (count >= 2) {
-                    	break;
-                    }
-                }
-	            
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
-	        return links;
+		    try {
+		        Document doc = Jsoup.connect("https://www.google.com/search?q=" + query).get();
+		        Elements results = doc.select("div.g");
+		        Elements urlElements = results.select("div.yuRUbf a[href]");
+		        int count = 0;
+		        for (Element element : urlElements) {
+		            String link = element.attr("href");
+		            links.add(link);
+		            count++;
+		            if (count >= 4) {
+		            	break;
+		            }
+		        }
+		    } catch (IOException e) {
+		    	logger.error("error while searching: {}", e.getMessage());
+		    }
+			return links;
 		}
-		
-		private String fetchHTML(String url) {
-	        RestTemplate restTemplate = new RestTemplate();
-	        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-	        return response.getBody();
-	    }
 
+		private String extractWebPages(List<String> links) {
+			List<String> texts = new ArrayList<>();
+	        for (String link : links) {
+	        	logger.info("scrapping data from: {}", link);
+	        	try {
+	        		Document doc = Jsoup.connect(link).get();
+	        		String text = doc.text();
+	        		if (text == null || text.isBlank()) {
+	        			text = "#EMPTY";
+	        		}
+	        		texts.add(text.substring(0, Math.min(5000, text.length())));
+	        	} catch (IOException e) {
+	        		logger.error("error while scrapping: {}", e.getMessage());
+	        	}
+	        }
+			return String.join("||", texts);
+		}
 	}
-
 }

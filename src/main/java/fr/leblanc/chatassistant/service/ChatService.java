@@ -93,7 +93,12 @@ public class ChatService implements InitializingBean {
 		Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
 		TokenStream tokenStream = getChatPlugin(formatChatId(chatId)).streamChat(message);
 		tokenStream
-			.onNext(t -> sink.tryEmitNext(t.replace(" ","$SPACE")))
+			.onNext(t -> {
+				if (t.matches("\\d.*")) {
+					t = " " + t;
+				}
+				sink.tryEmitNext(t.replace(" ","$SPACE"));
+			})
 			.onComplete(c -> sink.tryEmitNext("$COMPLETE"))
 			.onError(sink::tryEmitError)
 			.start();
