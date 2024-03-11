@@ -26,6 +26,8 @@ public class WebChatPlugin implements ChatPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(WebChatPlugin.class);
 
+	private static final int MAX_GOOGLE_RESULTS = 10;
+
 	@SystemMessage({
 		"You search on the Web to retrieve relevant information",
 	})
@@ -103,7 +105,7 @@ public class WebChatPlugin implements ChatPlugin {
 		            String link = element.attr("href");
 		            links.add(link);
 		            count++;
-		            if (count >= 4) {
+		            if (count >= MAX_GOOGLE_RESULTS) {
 		            	break;
 		            }
 		        }
@@ -128,7 +130,8 @@ public class WebChatPlugin implements ChatPlugin {
 	        		logger.error("error while scrapping: {}", e.getMessage());
 	        	}
 	        }
-			return String.join("||", texts);
+			String join = String.join(",", texts);
+			return join.substring(0, Math.min(16000, join.length()));
 		}
 	}
 }
